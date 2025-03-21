@@ -143,7 +143,7 @@ end
 
 def usage
   puts <<~USAGE
-  usage: sql_true_for_success.rb [--ddnet]
+  usage: ruby #{__FILE__} [--ddnet]
   description:
     Flips all true to false and vice versa for sql workers
     in your code base.
