@@ -141,6 +141,47 @@ def flip_files(files)
   puts "\nOK"
 end
 
+def check_connection_interface(filepath)
+  unless File.exist? filepath
+    puts ""
+    puts "Warning: file not found #{filepath}"
+    return
+  end
+
+  known_bool_methods = [
+    "Connect(char *pError, int ErrorSize)",
+    "PrepareStatement(const char *pStmt, char *pError, int ErrorSize)",
+    "Step(bool *pEnd, char *pError, int ErrorSize)",
+    "ExecuteUpdate(int *pNumUpdated, char *pError, int ErrorSize)",
+    "IsNull(int Col)",
+    "AddPoints(const char *pPlayer, int Points, char *pError, int ErrorSize)",
+    "BeginTransaction(char *pError, int ErrorSize)",
+    "CommitTransaction(char *pError, int ErrorSize)",
+    "RollbackTransaction(char *pError, int ErrorSize)",
+    "Transaction(char *pError, int ErrorSize, const std::function<bool()> &TransactionLogic)",
+    "MysqlAvailable()"
+  ]
+
+  File.read(filepath).split("\n").each_with_index do |line, line_num|
+    bool_match = line.match(/^\s*(virtual )?bool (?<name_with_params>.*)\)/)
+    next unless bool_match
+
+    name_with_params = bool_match[:name_with_params] + ")"
+
+    next if known_bool_methods.include? name_with_params
+
+    STDERR.puts ""
+    STDERR.puts "Warning: unknown bool method in #{filepath}:#{line_num}"
+    STDERR.puts "         the ddnet code base does not have this method"
+    STDERR.puts "         if you added it in your fork please flip the return values"
+    STDERR.puts "         in its implementation by hand! This script will not do it!"
+    STDERR.puts ""
+    STDERR.puts "   " + name_with_params
+    STDERR.puts "   " + "^" * name_with_params.length
+    STDERR.puts ""
+  end
+end
+
 def usage
   puts <<~USAGE
   usage: ruby #{__FILE__} [--ddnet]
@@ -168,4 +209,6 @@ end
 files = Dir.glob("src/**/*.cpp")
 files.delete("src/game/server/scoreworker.cpp") unless ARGV.include? "--ddnet"
 flip_files(files)
+
+check_connection_interface("src/engine/server/databases/connection.h")
 
