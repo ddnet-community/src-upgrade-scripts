@@ -8,10 +8,6 @@ def flip_true_or_false(line, truestr, falsestr)
   line.sub(falsestr, truestr)
 end
 
-# p flip_true_or_false("true", "true", "false") == "false"
-# p flip_true_or_false("return true;", "true", "false") == "return false;"
-# p flip_true_or_false("return false;", "true", "false") == "return true;"
-
 def flip_line(line)
   raise "line too complex" if line.include?("return true") && line.include?("return false")
 
@@ -50,12 +46,6 @@ def flip_line(line)
   line
 end
 
-# p flip_line("return true;") == "return false;"
-# p flip_line("return false;") == "return true;"
-# p flip_line("return false; // uwu") == "return true; // uwu"
-# p flip_line("return 2 == 0;") == "return 2 == 0; // TODO: check this bool manually"
-
-
 def flip_method_call(line, sql_method)
   return line unless line.include?(sql_method)
 
@@ -83,12 +73,6 @@ def flip_method_call(line, sql_method)
 
   line
 end
-
-# p flip_method_call("if(foo())", "foo") == "if(!foo())"
-# p flip_method_call("if(bar::foo())", "foo") == "if(!bar::foo())"
-# p flip_method_call("if(bar.foo())", "foo") == "if(!bar.foo())"
-# p flip_method_call("if(bar->foo())", "foo") == "if(!bar->foo())"
-# p flip_method_call("if(barfoo())", "foo") == "if(barfoo())"
 
 def flip_file(filepath)
   lines = []
