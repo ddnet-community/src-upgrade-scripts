@@ -19,6 +19,8 @@ def flip_line(line)
     return line
   elsif line.include?("return pSqlServer->Step(&End, pError, ErrorSize);")
     return line
+  elsif line.include?('return pSqlServer->ExecuteUpdate("') # 0XF only method
+    return line
   elsif line.include?("return NumUpdated == 0;")
     return line.sub("return NumUpdated == 0;", "return NumUpdated != 0;")
   elsif line.include?("return NumUpdated != 0;")

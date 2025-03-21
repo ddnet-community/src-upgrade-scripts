@@ -41,6 +41,13 @@ describe '#flip_line' do
     end
   end
 
+  context 'return custom 0XF method' do
+    it 'should not flip the call because its return is flipped' do
+      custom_0xf_sql_method = 'return pSqlServer->ExecuteUpdate("DELETE FROM punishments WHERE end_date < CURRENT_TIMESTAMP", pError, ErrorSize);'
+      expect(flip_line(custom_0xf_sql_method)).to eq(custom_0xf_sql_method)
+    end
+  end
+
   context 'should warn on unknown method' do
     it 'should not flip the call because its return is flipped' do
       unknown_method = "return pSqlServer->WhatIsThis();"
