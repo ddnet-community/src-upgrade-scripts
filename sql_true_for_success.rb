@@ -15,7 +15,7 @@ def flip_line(line)
     return line.sub("return true;", "return false;")
   elsif line.include?("return false;")
     return line.sub("return false;", "return true;")
-  elsif line.include?("return pSqlServer->ExecuteUpdate(&NumInserted, pError, ErrorSize);")
+  elsif line.match?(/return pSqlServer->ExecuteUpdate\(&\w+, pError, ErrorSize\);/)
     return line
   elsif line.include?("return pSqlServer->Step(&End, pError, ErrorSize);")
     return line
