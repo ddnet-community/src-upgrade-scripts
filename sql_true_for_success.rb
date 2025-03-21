@@ -141,5 +141,28 @@ def flip_files(files)
   puts "\nOK"
 end
 
-flip_files(Dir.glob("src/**/*.cpp"))
+def usage
+  puts <<~USAGE
+  usage: sql_true_for_success.rb [--ddnet]
+  description:
+    Flips all true to false and vice versa for sql workers
+    in your code base.
+    Should be run from the root of the repository (next to the src folder)
+    Edits the code in place! Make a backup first and check the diff applied by hand!
+
+    Helps with merging ddnet server forks into https://github.com/ddnet/ddnet/pull/9900
+  options:
+    --ddnet    you should never need this in your ddnet fork
+               this is for official ddnet only
+  USAGE
+end
+
+if ARGV.include?("-h") || ARGV.include?("--help")
+  usage
+  exit 0
+end
+
+files = Dir.glob("src/**/*.cpp")
+files.delete("src/game/server/scoreworker.cpp") unless ARGV.include? "--ddnet"
+flip_files(files)
 
