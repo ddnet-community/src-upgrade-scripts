@@ -151,6 +151,9 @@ def usage
     Edits the code in place! Make a backup first and check the diff applied by hand!
 
     Helps with merging ddnet server forks into https://github.com/ddnet/ddnet/pull/9900
+
+    Warning the script should not be run more than once!
+    Running it twice reverts the previous run.
   options:
     --ddnet    you should never need this in your ddnet fork
                this is for official ddnet only
