@@ -9,13 +9,11 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Ruby 3.4
-      uses: actions/setup-ruby@v1
+    - uses: actions/checkout@v4
+    - uses: ruby/setup-ruby@v1
       with:
-        ruby-version: 3.4.x
+        ruby-version: '3.4'
     - name: Run unit tests
       run: |
         gem install rspec
