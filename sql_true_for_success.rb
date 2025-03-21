@@ -55,23 +55,51 @@ end
 # p flip_line("return false; // uwu") == "return true; // uwu"
 # p flip_line("return 2 == 0;") == "return 2 == 0; // TODO: check this bool manually"
 
+
+def flip_method_call(line, sql_method)
+  return line unless line.include?(sql_method)
+
+  [
+    "\\w+::#{sql_method}\\(",
+    "\\w+->#{sql_method}\\(",
+    "\\w+\\.#{sql_method}\\("
+  ].each do |call_str|
+    call_neg_reg = Regexp.new("!#{call_str}")
+    call_pos_reg = Regexp.new(call_str)
+    if line.match? call_neg_reg
+      return line.gsub(call_neg_reg) { |_| Regexp.last_match[0] }
+    elsif line.match? call_pos_reg
+      return line.gsub(call_pos_reg) { |_| "!#{Regexp.last_match[0]}" }
+    end
+  end
+
+  call_neg_reg = Regexp.new("([^\\w])!(#{sql_method}\\()")
+  call_pos_reg = Regexp.new("([^\\w])(#{sql_method}\\()")
+  if line.match? call_neg_reg
+    return line.gsub(call_neg_reg) { |_| "#{Regexp.last_match[1]}#{Regexp.last_match[2]}" }
+  elsif line.match? call_pos_reg
+    return line.gsub(call_pos_reg) { |_| "#{Regexp.last_match[1]}!#{Regexp.last_match[2]}" }
+  end
+
+  line
+end
+
+# p flip_method_call("if(foo())", "foo") == "if(!foo())"
+# p flip_method_call("if(bar::foo())", "foo") == "if(!bar::foo())"
+# p flip_method_call("if(bar.foo())", "foo") == "if(!bar.foo())"
+# p flip_method_call("if(bar->foo())", "foo") == "if(!bar->foo())"
+# p flip_method_call("if(barfoo())", "foo") == "if(barfoo())"
+
 def flip_file(filepath)
   lines = []
+  sql_methods = []
 
   in_sql_worker = false
 
   File.read(filepath).split("\n").each_with_index do |line, line_num|
-    if line.match?(/^bool \w+::\w+\(IDbConnection \*.*char \*pError, int ErrorSize/)
-      raise "unexpected nested method" if in_sql_worker
-
-      in_sql_worker = true
-    elsif line == "}"
-      in_sql_worker = false
-    end
-
     if in_sql_worker
       begin
-        lines << flip_line(line)
+        lines << yield(line)
       rescue => err
         STDERR.puts ""
         STDERR.puts "   " + line
@@ -83,13 +111,49 @@ def flip_file(filepath)
     else
       lines << line
     end
+
+    match_sql_function = line.match(/^bool \w+::(?<name>\w+)\(IDbConnection \*.*char \*pError, int ErrorSize/)
+    if match_sql_function
+      raise "unexpected nested method" if in_sql_worker
+
+      sql_methods << match_sql_function[:name]
+      in_sql_worker = true
+    elsif line == "}"
+      in_sql_worker = false
+    end
   end
 
   File.write(filepath, lines.join("\n") + "\n")
+  sql_methods
 end
 
-Dir.glob("src/**/*.cpp").each do |filepath|
-  print "."
-  flip_file(filepath)
+def flip_files(files)
+  sql_methods = []
+
+  files.each do |filepath|
+    print "."
+    sql_methods << flip_file(filepath) do |line|
+      flip_line(line)
+    end
+  end
+
+  sql_methods.flatten!
+
+  puts "\ndetected following sql methods:"
+  p sql_methods
+
+  files.each do |filepath|
+    print "."
+    sql_methods.each do |sql_method|
+      print ":"
+      flip_file(filepath) do |line|
+        flip_method_call(line, sql_method)
+      end
+    end
+  end
+
+  puts "\nOK"
 end
+
+flip_files(Dir.glob("src/**/*.cpp"))
 
